@@ -1,4 +1,4 @@
-import Modulocr from '../utils/modulocr';
+import Modulocr from './modulocr';
 
 console.log(Modulocr.encrypt('test')); // edge case
 
