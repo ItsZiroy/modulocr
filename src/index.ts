@@ -1,6 +1,10 @@
-import printHelloWorld from '../utils/helloWorld';
+import Modulocr from '../utils/modulocr';
 
-printHelloWorld();
-console.log(
-  '\x1b[36m \n\n It works!\x1b[0m Thanks for using our template! Check out\x1b[35m http://teckdigital.de \x1b[36m \n Open \'index.ts\' to see your changes hot reloading. \x1b[0m',
-);
+console.log(Modulocr.encrypt('rm')); // edge case
+
+console.log(Modulocr.encrypt('Informatik ist toll kappa'))
+
+for (let i = 0; i < 10; i++) {
+    console.log(Modulocr.encrypt('Informatik ist toll kappa'))
+}
+
