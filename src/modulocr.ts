@@ -28,8 +28,39 @@ const index = {
     '-': 27,
     '?': 28,
 };
-export default class Modulocr {
-    static encrypt = (encryptable: string): string => {
+type IndexKey = keyof typeof index;
+
+class Modulocr {
+    /**
+     * # Modulocr encryption
+     *
+     * Every letter of the string is converted to a number
+     * from 1-29. It includes the letters from a-z, - and ?.
+     *
+     * The last number of the index may be customized as
+     * the index grows, but it must always be a prime
+     * number and unassigned as only then the algorithm
+     * never returns zero, which is difficult to handle.
+     *
+     * ## The algorithm
+     *
+     * The algorithm itself is fairly simple:
+     * A random `seed` between 1 and 9 is generated and multipied
+     * with the first value of the string. Then the modulo 29 (or
+     * index size) is calculated and returned as the new value
+     * and converted back to a letter which serves as the encrypted
+     * value.
+     *
+     * The algorithm then moves on to replace seed with the
+     * encrypted value of the former letter in the encryptable
+     * string. This leaves the following basic function to
+     * be evaluated for each letter in the string:
+     *
+     * `(seed | before) * current % 29`
+     *
+     * @param encryptable The string to be encrypted
+     */
+    public encrypt = (encryptable: string): string => {
         const seed = parseInt((Math.random() * 9).toFixed(0)) || 1;
 
         const parts = encryptable.toLowerCase().split('');
@@ -42,16 +73,15 @@ export default class Modulocr {
             if (value === ' ') {
                 result = result + ' ';
             } else {
-                const encrypted = Modulocr.encryptInt(
+                const encrypted = this.encryptInt(
                     before,
-                    value as keyof typeof index,
-                    seed
+                    value as IndexKey,
+                    seed,
                 );
                 result =
                     result +
                     Object.keys(index).find(
-                        (key: string) =>
-                            index[key as keyof typeof index] === encrypted
+                        (key: string) => index[key as IndexKey] === encrypted,
                     );
 
                 before = encrypted;
@@ -60,19 +90,7 @@ export default class Modulocr {
         return result;
     };
 
-    static encryptInt = (
-        before: number,
-        encryptable: keyof typeof index,
-        seed: number
-    ): number => {
-        if (!before) {
-            return (index[encryptable] * seed) % 29;
-        } else {
-            return (before * index[encryptable]) % 29;
-        }
-    };
-
-    static decrypt = (decryptable: string): string => {
+    public decrypt = (decryptable: string): string => {
         const seed = parseInt(decryptable.split('')[0]);
 
         const parts = decryptable.slice(1).split('');
@@ -85,44 +103,72 @@ export default class Modulocr {
             if (value === ' ') {
                 result = result + ' ';
             } else {
-                const decrypted = Modulocr.decryptInt(
+                const decrypted = this.decryptInt(
                     before,
-                    value as keyof typeof index,
-                    seed
+                    value as IndexKey,
+                    seed,
                 );
 
                 result =
                     result +
                     Object.keys(index).find(
-                        (key: string) =>
-                            index[key as keyof typeof index] === decrypted
+                        (key: string) => index[key as IndexKey] === decrypted,
                     );
 
-                before = index[value as keyof typeof index];
+                before = index[value as IndexKey];
             }
         });
 
         return result;
     };
 
-    static decryptInt = (
+    /**
+     * The recursively run method of the encryption
+     * algorithm
+     *
+     * @param before Value of the former encrypted letter
+     * @param encryptable The letter to be encrypted
+     * @param seed The seed of the algorithm
+     */
+    private encryptInt = (
         before: number,
-        decryptable: keyof typeof index,
-        seed: number
+        encryptable: IndexKey,
+        seed: number,
+    ): number => {
+        if (!before) {
+            return (index[encryptable] * seed) % 29;
+        } else {
+            return (before * index[encryptable]) % 29;
+        }
+    };
+
+    /**
+     * The recursively run method of the decryption
+     * algorithm
+     *
+     * @param before Value of the former encrypted letter
+     * @param encryptable The letter to be encrypted
+     * @param seed The seed of the algorithm
+     */
+    private decryptInt = (
+        before: number,
+        decryptable: IndexKey,
+        seed: number,
     ): number => {
         if (!before) {
             before = seed;
         }
-        let e = 0;
+        let lcm = 0; // Lowest common multiple
 
         for (let i = 0; i < 30; i++) {
             if (
                 Number.isInteger(((index[decryptable] + 29 * i) / before) % 29)
             ) {
-                e = i;
+                lcm = i;
                 break;
             }
         }
-        return (index[decryptable] + 29 * e) / before;
+        return (index[decryptable] + 29 * lcm) / before;
     };
 }
+export default new Modulocr();
